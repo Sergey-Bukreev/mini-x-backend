@@ -10,7 +10,14 @@ return new class extends Migration
     {
         Schema::create('auth_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('user_id')->index();
+
+            // Связь с таблицей users. Указывает, что каждая сессия принадлежит конкретному пользователю.
+            // При удалении пользователя все его сессии автоматически удаляются из базы.
+            $table->foreignUuid('user_id')
+                ->constrained()
+                ->onDelete('cascade');
+
+
             $table->string('refresh_token_hash')->unique();
             $table->timestamp('expires_at');
             $table->timestamp('absolute_expires_at');

@@ -63,5 +63,56 @@ class AuthController
         ]);
     }
 
+    public function refresh(Request $request) {
+        $refreshToken = $request->input('refresh_token');
+
+        $hash = hash('sha256', $refreshToken);
+        $authSession = AuthSession::where('refresh_token_hash', $hash)->first();
+
+        if (
+            !$authSession ||
+            $authSession->revoked_at !== null ||
+            $authSession->expires_at < now() ||
+            $authSession->absolute_expires_at < now()
+        ) {
+            return response()->json([
+                'message' => 'Invalid session',
+            ], 401);
+        }
+
+        $user = User::find($authSession->user_id);
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $authSession->update([
+            'revoked_at' => now(),
+        ]);
+
+        $newRefreshToken = Str::random(64);
+        $newRefreshTokenHash = hash('sha256', $newRefreshToken);
+
+        AuthSession::create([
+            'user_id' => $user->id,
+            'refresh_token_hash' => $newRefreshTokenHash,
+            'expires_at' => now()->addDays(7),
+            'absolute_expires_at' => $authSession->absolute_expires_at,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        $accessToken = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'access_token' => $accessToken,
+            'refresh_token' => $newRefreshToken,
+            'user' => $user,
+        ]);
+
+    }
+
 
 }
