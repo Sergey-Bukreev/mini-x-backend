@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Laravel\Sanctum\HasApiTokens;
 
 use App\Enums\UserRole;
 use App\Enums\AccountStatus;
@@ -37,6 +39,8 @@ class User extends Authenticatable {
 
 use Notifiable;
 use HasUuids;
+use HasFactory;
+use HasApiTokens;
 
 /**
  * Переопределяем тип ключа, выключаем автоинкрементацию

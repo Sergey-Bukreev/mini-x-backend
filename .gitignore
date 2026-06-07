@@ -11,7 +11,7 @@ Thumbs.db
 *.log
 
 .env
-.env.*
+app/.env.testing
 !.env.example
 
 app/.env

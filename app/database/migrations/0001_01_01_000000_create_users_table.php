@@ -12,18 +12,6 @@ return new class extends Migration
 
     public function up(): void
     {
-        DB::statement(sprintf(
-            "CREATE TYPE user_role AS ENUM ('%s', '%s')",
-            UserRole::USER->value,
-            UserRole::ADMIN->value
-        ));
-
-        DB::statement(sprintf(
-            "CREATE TYPE account_status AS ENUM ('%s', '%s')",
-            AccountStatus::ACTIVE->value,
-            AccountStatus::BLOCKED->value
-        ));
-
         Schema::create('users', function (Blueprint $table) {
         $table->uuid('id')->primary();
         $table->string('first_name');
@@ -38,20 +26,13 @@ return new class extends Migration
         $table->timestamp('blocked_at')->nullable();
         $table->text('blocked_reason')->nullable();
         $table->timestamp('last_login_at')->nullable();
+        $table->string('user_role')->default('user');
+        $table->string('account_status')->default('active');
 
         $table->rememberToken();
         $table->timestamps();
         });
 
-        DB::statement(sprintf(
-            "ALTER TABLE users ADD COLUMN user_role user_role NOT NULL DEFAULT '%s'",
-            UserRole::USER->value
-        ));
-
-        DB::statement(sprintf(
-            "ALTER TABLE users ADD COLUMN account_status account_status NOT NULL DEFAULT '%s'",
-            AccountStatus::ACTIVE->value
-        ));
     }
 
 
@@ -59,7 +40,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        DB::statement('DROP TYPE IF EXISTS account_status');
-        DB::statement('DROP TYPE IF EXISTS user_role');
     }
 };
