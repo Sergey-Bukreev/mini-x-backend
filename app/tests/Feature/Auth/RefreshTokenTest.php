@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\AuthSession;
 use App\Models\User;
+use App\Services\Auth\AuthTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,17 +12,9 @@ class RefreshTokenTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createAuthSession(User $user, string $refreshToken, array $overrides = []): AuthSession
+    private function tokenService(): AuthTokenService
     {
-        return AuthSession::create(array_merge([
-            'user_id' => $user->id,
-            'refresh_token_hash' => hash('sha256', $refreshToken),
-            'expires_at' => now()->addDays(7),
-            'absolute_expires_at' => now()->addDays(90),
-            'revoked_at' => null,
-            'ip_address' => '127.0.0.1',
-            'user_agent' => 'PHPUnit',
-        ], $overrides));
+        return app(AuthTokenService::class);
     }
 
     public function test_user_can_refresh_access_token(): void
@@ -47,7 +40,7 @@ class RefreshTokenTest extends TestCase
 
         // 4 доестаем рефреш токен
         $refreshToken = $loginResponse->json('refresh_token');
-        $refreshTokenHash = hash('sha256', $refreshToken);
+        $refreshTokenHash = $this->tokenService()->hashRefreshToken($refreshToken);
 
         /// 5 отправляем запрос на рефреш
         $refreshResponse = $this->postJson('/api/v1/refresh', [
@@ -133,9 +126,11 @@ class RefreshTokenTest extends TestCase
         // 2 создаём отозванную auth session
         $refreshToken = 'revoked-refresh-token';
 
-        $this->createAuthSession($user, $refreshToken, [
-            'revoked_at' => now(),
-        ]);
+        AuthSession::factory()
+            ->forUser($user)
+            ->forRefreshToken($refreshToken)
+            ->revoked()
+            ->create();
 
         // 3 отправляем запрос на рефреш
         $response = $this->postJson('/api/v1/refresh', [
@@ -159,10 +154,11 @@ class RefreshTokenTest extends TestCase
         // 2 создаём auth session с истекшим expires_at
         $refreshToken = 'expired-refresh-token';
 
-        $this->createAuthSession($user, $refreshToken, [
-            'expires_at' => now()->subMinute(),
-            'absolute_expires_at' => now()->addDays(30),
-        ]);
+        AuthSession::factory()
+            ->forUser($user)
+            ->forRefreshToken($refreshToken)
+            ->expired()
+            ->create();
 
         // 3 отправляем запрос на рефреш
         $response = $this->postJson('/api/v1/refresh', [
@@ -186,10 +182,11 @@ class RefreshTokenTest extends TestCase
         // 2 создаём auth session с истекшим absolute_expires_at
         $refreshToken = 'absolute-expired-refresh-token';
 
-        $this->createAuthSession($user, $refreshToken, [
-            'expires_at' => now()->addDays(7),
-            'absolute_expires_at' => now()->subMinute(),
-        ]);
+        AuthSession::factory()
+            ->forUser($user)
+            ->forRefreshToken($refreshToken)
+            ->absoluteExpired()
+            ->create();
 
         // 3 отправляем запрос на рефреш
         $response = $this->postJson('/api/v1/refresh', [

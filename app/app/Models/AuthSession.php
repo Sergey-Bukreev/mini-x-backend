@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use DateTimeInterface;
+
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 /**
@@ -22,6 +23,7 @@ use Illuminate\Support\Carbon;
 class AuthSession extends Model
 {
     use HasUuids;
+    use HasFactory;
 
     /**
      * Переопределяем тип ключа, выключаем автоинкрементацию
