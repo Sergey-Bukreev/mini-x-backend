@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Requests\Auth\RegisterRequest;
-use App\Models\AuthSession;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-
+use App\Services\Auth\AuthTokenService;
 
 class AuthController
 {
@@ -23,7 +21,7 @@ class AuthController
         ], 201);
     }
 
-    public function login(Request $request) {
+    public function login(Request $request, AuthTokenService $tokenService) {
         $email = $request->input('email');
         $password = $request->input('password');
 
@@ -41,20 +39,10 @@ class AuthController
             ], 401);
         }
 
-        $refreshToken = Str::random(64);
-        $refreshTokenHash = hash('sha256', $refreshToken);
+        $refreshToken = $tokenService->generateRefreshToken();
 
-        AuthSession::create([
-            'user_id' => $user->id,
-            'refresh_token_hash' => $refreshTokenHash,
-            'expires_at' => now()->addDays(7),
-            'absolute_expires_at' => now()->addDays(90),
-            'revoked_at' => null,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
-
-        $accessToken = $user->createToken('auth_token')->plainTextToken;
+        $tokenService->createRefreshSession($user, $refreshToken, $request);
+        $accessToken = $tokenService->createAccessToken($user);
 
         return response()->json([
             'access_token' => $accessToken,
@@ -63,11 +51,10 @@ class AuthController
         ]);
     }
 
-    public function refresh(Request $request) {
+    public function refresh(Request $request, AuthTokenService $tokenService) {
         $refreshToken = $request->input('refresh_token');
 
-        $hash = hash('sha256', $refreshToken);
-        $authSession = AuthSession::where('refresh_token_hash', $hash)->first();
+        $authSession = $tokenService->findSessionByRefreshToken($refreshToken);
 
         if (
             !$authSession ||
@@ -88,23 +75,11 @@ class AuthController
             ], 404);
         }
 
-        $authSession->update([
-            'revoked_at' => now(),
-        ]);
+        $newRefreshToken = $tokenService->generateRefreshToken();
 
-        $newRefreshToken = Str::random(64);
-        $newRefreshTokenHash = hash('sha256', $newRefreshToken);
+        $tokenService->rotateRefreshSession($authSession, $user, $newRefreshToken, $request);
 
-        AuthSession::create([
-            'user_id' => $user->id,
-            'refresh_token_hash' => $newRefreshTokenHash,
-            'expires_at' => now()->addDays(7),
-            'absolute_expires_at' => $authSession->absolute_expires_at,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
-
-        $accessToken = $user->createToken('auth_token')->plainTextToken;
+        $accessToken = $tokenService->createAccessToken($user);
 
         return response()->json([
             'access_token' => $accessToken,
