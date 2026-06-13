@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Enums\Messages\AuthMessages;
 use App\Models\AuthSession;
 use App\Models\User;
 use App\Services\Auth\AuthTokenService;
@@ -97,7 +98,7 @@ class RefreshTokenTest extends TestCase
         $response->assertStatus(401);
 
         $response->assertJson([
-            'message' => 'Invalid session',
+            'message' => __(AuthMessages::InvalidSession->value),
         ]);
     }
 
@@ -113,7 +114,7 @@ class RefreshTokenTest extends TestCase
         $response->assertStatus(401);
 
         $response->assertJson([
-            'message' => 'Invalid session',
+            'message' => __(AuthMessages::InvalidSession->value),
         ]);
     }
 
@@ -141,7 +142,7 @@ class RefreshTokenTest extends TestCase
         $response->assertStatus(401);
 
         $response->assertJson([
-            'message' => 'Invalid session',
+            'message' => __(AuthMessages::InvalidSession->value),
         ]);
     }
 
@@ -169,7 +170,7 @@ class RefreshTokenTest extends TestCase
         $response->assertStatus(401);
 
         $response->assertJson([
-            'message' => 'Invalid session',
+            'message' => __(AuthMessages::InvalidSession->value),
         ]);
     }
 
@@ -197,7 +198,7 @@ class RefreshTokenTest extends TestCase
         $response->assertStatus(401);
 
         $response->assertJson([
-            'message' => 'Invalid session',
+            'message' => __(AuthMessages::InvalidSession->value),
         ]);
     }
 

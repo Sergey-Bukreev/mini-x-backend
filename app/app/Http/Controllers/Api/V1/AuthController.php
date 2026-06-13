@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\Messages\AuthMessages;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use App\Services\Auth\AuthTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use App\Services\Auth\AuthTokenService;
 
 class AuthController
 {
@@ -16,7 +17,7 @@ class AuthController
         $user = User::create($request->validated());
 
         return response()->json([
-            'message' => 'User registered successfully.',
+            'message' => __(AuthMessages::Registered->value),
             'user' => $user,
         ], 201);
     }
@@ -29,13 +30,13 @@ class AuthController
 
         if (!$user) {
             return response()->json([
-                'message' => 'Invalid email or password',
+                'message' => __(AuthMessages::InvalidCredentials->value),
             ], 401);
         }
 
         if (!Hash::check($password, $user->password)) {
             return response()->json([
-                'message' => 'Invalid email or password',
+                'message' => __(AuthMessages::InvalidCredentials->value),
             ], 401);
         }
 
@@ -63,7 +64,7 @@ class AuthController
             $authSession->absolute_expires_at < now()
         ) {
             return response()->json([
-                'message' => 'Invalid session',
+                'message' => __(AuthMessages::InvalidSession->value),
             ], 401);
         }
 
@@ -71,7 +72,7 @@ class AuthController
 
         if (!$user) {
             return response()->json([
-                'message' => 'User not found',
+                'message' => __(AuthMessages::UserNotFound->value),
             ], 404);
         }
 

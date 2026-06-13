@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Enums\Messages\AuthValidationMessages;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
@@ -63,30 +64,30 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'first_name.required' => 'First name is required.',
-            'first_name.min' => 'First name must be at least 2 characters.',
-            'first_name.max' => 'First name may not be greater than 50 characters.',
+            'first_name.required' => __(AuthValidationMessages::RegisterFirstNameRequired->value),
+            'first_name.min' => __(AuthValidationMessages::RegisterFirstNameMin->value),
+            'first_name.max' => __(AuthValidationMessages::RegisterFirstNameMax->value),
 
-            'last_name.required' => 'Last name is required.',
-            'last_name.min' => 'Last name must be at least 2 characters.',
-            'last_name.max' => 'Last name may not be greater than 50 characters.',
+            'last_name.required' => __(AuthValidationMessages::RegisterLastNameRequired->value),
+            'last_name.min' => __(AuthValidationMessages::RegisterLastNameMin->value),
+            'last_name.max' => __(AuthValidationMessages::RegisterLastNameMax->value),
 
-            'username.required' => 'Username is required.',
-            'username.unique' => 'This username is already taken.',
-            'username.alpha_dash' => 'Username may contain only letters, numbers, dashes and underscores.',
-            'username.min' => 'Username must be at least 2 characters.',
-            'username.max' => 'Username may not be greater than 50 characters.',
+            'username.required' => __(AuthValidationMessages::RegisterUsernameRequired->value),
+            'username.unique' => __(AuthValidationMessages::RegisterUsernameUnique->value),
+            'username.alpha_dash' => __(AuthValidationMessages::RegisterUsernameAlphaDash->value),
+            'username.min' => __(AuthValidationMessages::RegisterUsernameMin->value),
+            'username.max' => __(AuthValidationMessages::RegisterUsernameMax->value),
 
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please enter a valid email address.',
-            'email.unique' => 'An account with this email already exists.',
+            'email.required' => __(AuthValidationMessages::RegisterEmailRequired->value),
+            'email.email' => __(AuthValidationMessages::RegisterEmailInvalid->value),
+            'email.unique' => __(AuthValidationMessages::RegisterEmailUnique->value),
 
-            'birth_date.required' => 'Date of birth is required.',
-            'birth_date.date' => 'Please enter a valid date.',
-            'birth_date.before' => 'You must be at least 14 years old to register.',
+            'birth_date.required' => __(AuthValidationMessages::RegisterBirthDateRequired->value),
+            'birth_date.date' => __(AuthValidationMessages::RegisterBirthDateInvalid->value),
+            'birth_date.before' => __(AuthValidationMessages::RegisterBirthDateBefore->value),
 
-            'password.required' => 'Password is required.',
-            'password.confirmed' => 'Passwords do not match.',
+            'password.required' => __(AuthValidationMessages::RegisterPasswordRequired->value),
+            'password.confirmed' => __(AuthValidationMessages::RegisterPasswordConfirmed->value),
         ];
     }
 }
