@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\Messages\AuthMessages;
+use App\Http\Requests\Auth\RefreshTokenRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use App\Services\Auth\AuthTokenService;
@@ -52,8 +53,9 @@ class AuthController
         ]);
     }
 
-    public function refresh(Request $request, AuthTokenService $tokenService) {
-        $refreshToken = $request->input('refresh_token');
+    public function refresh(RefreshTokenRequest $request, AuthTokenService $tokenService): JsonResponse
+    {
+        $refreshToken = $request->validated('refresh_token');
 
         $authSession = $tokenService->findSessionByRefreshToken($refreshToken);
 

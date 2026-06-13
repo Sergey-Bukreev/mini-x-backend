@@ -3,10 +3,12 @@
 namespace Tests\Feature\Auth;
 
 use App\Enums\Messages\AuthMessages;
+use App\Enums\Messages\AuthValidationMessages;
 use App\Models\AuthSession;
 use App\Models\User;
 use App\Services\Auth\AuthTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class RefreshTokenTest extends TestCase
@@ -18,6 +20,61 @@ class RefreshTokenTest extends TestCase
         return app(AuthTokenService::class);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Validation
+    |--------------------------------------------------------------------------
+    |
+    | Проверяем ошибки RefreshTokenRequest.
+    | Эти кейсы возвращают 422 и не доходят до поиска refresh-сессии.
+    |
+    */
+    public function test_refresh_fails_when_refresh_token_is_missing(): void
+    {
+        $response = $this->postJson('/api/v1/refresh', []);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonValidationErrors([
+            'refresh_token' => __(AuthValidationMessages::RefreshTokenRequired->value),
+        ]);
+    }
+
+    public function test_refresh_fails_when_refresh_token_is_not_string(): void
+    {
+        $response = $this->postJson('/api/v1/refresh', [
+            'refresh_token' => 123,
+        ]);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonValidationErrors([
+            'refresh_token' => __(AuthValidationMessages::RefreshTokenInvalid->value),
+        ]);
+    }
+
+    public function test_refresh_fails_when_refresh_token_has_invalid_length(): void
+    {
+        $response = $this->postJson('/api/v1/refresh', [
+            'refresh_token' => Str::random(63),
+        ]);
+
+        $response->assertStatus(422);
+
+        $response->assertJsonValidationErrors([
+            'refresh_token' => __(AuthValidationMessages::RefreshTokenInvalid->value),
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Successful refresh
+    |--------------------------------------------------------------------------
+    |
+    | Проверяем основной успешный сценарий обновления токенов.
+    | Валидный refresh_token должен вернуть новую пару токенов и создать новую сессию.
+    |
+    */
     public function test_user_can_refresh_access_token(): void
     {
 
@@ -69,6 +126,15 @@ class RefreshTokenTest extends TestCase
         $this->assertDatabaseCount('auth_sessions', 2);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Rotation protection
+    |--------------------------------------------------------------------------
+    |
+    | Проверяем защиту от повторного использования refresh_token.
+    | После успешной ротации старый refresh_token больше не должен работать.
+    |
+    */
     public function test_refresh_token_cannot_be_reused(): void
     {
 
@@ -102,12 +168,24 @@ class RefreshTokenTest extends TestCase
         ]);
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Invalid sessions
+    |--------------------------------------------------------------------------
+    |
+    | Проверяем бизнес-ошибки refresh-сессии.
+    | Токен проходит валидацию формата, но сама сессия не найдена, отозвана или истекла.
+    |
+    */
     public function test_refresh_fails_with_invalid_token(): void
     {
 
         // 1 отправляем несуществующий refresh token
+        $refreshToken = Str::random(64);
+
         $response = $this->postJson('/api/v1/refresh', [
-            'refresh_token' => 'invalid-refresh-token',
+            'refresh_token' => $refreshToken,
         ]);
 
         // 2 проверяем, что сессия не найдена
@@ -125,7 +203,7 @@ class RefreshTokenTest extends TestCase
         $user = User::factory()->create();
 
         // 2 создаём отозванную auth session
-        $refreshToken = 'revoked-refresh-token';
+        $refreshToken = Str::random(64);
 
         AuthSession::factory()
             ->forUser($user)
@@ -153,7 +231,7 @@ class RefreshTokenTest extends TestCase
         $user = User::factory()->create();
 
         // 2 создаём auth session с истекшим expires_at
-        $refreshToken = 'expired-refresh-token';
+        $refreshToken = Str::random(64);
 
         AuthSession::factory()
             ->forUser($user)
@@ -181,7 +259,7 @@ class RefreshTokenTest extends TestCase
         $user = User::factory()->create();
 
         // 2 создаём auth session с истекшим absolute_expires_at
-        $refreshToken = 'absolute-expired-refresh-token';
+        $refreshToken = Str::random(64);
 
         AuthSession::factory()
             ->forUser($user)

@@ -28,4 +28,7 @@ enum AuthValidationMessages: string
 
     case RegisterPasswordRequired = 'auth_validation.register.password.required';
     case RegisterPasswordConfirmed = 'auth_validation.register.password.confirmed';
+
+    case RefreshTokenRequired = 'auth_validation.refresh.refresh_token.required';
+    case RefreshTokenInvalid = 'auth_validation.refresh.refresh_token.invalid';
 }

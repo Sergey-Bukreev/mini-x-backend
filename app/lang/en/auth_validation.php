@@ -39,4 +39,11 @@ return [
             'confirmed' => 'Passwords do not match.',
         ],
     ],
+
+    'refresh' => [
+        'refresh_token' => [
+            'required' => 'Refresh token is required.',
+            'invalid' => 'Refresh token is invalid.',
+        ]
+    ]
 ];
